@@ -12,7 +12,7 @@ output:
 theme: cosmo
 ---
 
-Source: https://github.com/markziemann/shoulder-instability-osteroarthritis
+Source: hhttps://github.com/markziemann/echs1_rnaseq
 
 # Introduction
 
@@ -114,7 +114,7 @@ Multidimensional scaling plot to show the variation between all samples, very si
 
 Firstly with the data before aggregating technical replicates.
 
-```{r,mds,fig.height=7,fig.width=7}
+```{r,mds1,fig.height=7,fig.width=7}
 
 mds <- cmdscale(dist(t(xx)))
 
@@ -128,7 +128,7 @@ Now for the data after aggregation.
 
 It looks like the drug has a bigger effect than the gene KO.
 
-```{r,mds,fig.height=7,fig.width=7}
+```{r,mds2,fig.height=7,fig.width=7}
 
 mds <- cmdscale(dist(t(ll)))
 
@@ -419,6 +419,30 @@ mm <- list("KO"=dge1,"drug"=dge4)
 
 m <- mitch_import(mm, DEtype="deseq2",geneTable=gt)
 mres <- mitch_calc(m, genesets, priority="effect")
+head(mres$enrichment_result,20) %>% 
+kbl(caption = "Top gene pathway differences in contrast 1 and 4") %>% kable_paper("hover", full_width = F)
+
+n=40
+mx <- as.matrix(mres$enrichment_result[1:n,4:5])
+rownames(mx) <- mres$set
+rownames(mx) <- mres$enrichment_result$set[1:n]
+
+colfunc <- colorRampPalette(c("blue", "white", "red"))
+
+heatmap.2(mx,trace="none",col=colfunc(25),scale="none", margins = c(10,25), cexRow=0.7,
+    main=paste("Top ranked Reactomes") )
+
+```
+
+Mitch can also be used to search for discordant pathways.
+Gene sets are prioritised by standard deviation.
+
+```{r,mitch3}
+
+mm <- list("KO"=dge1,"drug"=dge4)
+
+m <- mitch_import(mm, DEtype="deseq2",geneTable=gt)
+mres <- mitch_calc(m, genesets, priority="sd")
 head(mres$enrichment_result,20) %>% kbl(caption = "Top gene pathway differences in contrast 1 and 4") %>% kable_paper("hover", full_width = F)
 
 n=40
