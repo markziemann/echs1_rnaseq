@@ -1,5 +1,5 @@
 ---
-title: "Shoulder transcriptome analysis: instability vs osteoarthritis"
+title: "ECHS1 KO RNA-seq"
 author: "Mark Ziemann"
 date: "`r Sys.Date()`"
 output:
@@ -55,7 +55,7 @@ rownames(xx) <- xx$geneid
 xx$geneid = NULL
 xx <- round(xx)
 xx <- xx[,which(colnames(xx)!="test")]
-head(xx)
+xx[1:6,1:6]
 dim(xx)
 
 ```
@@ -192,9 +192,9 @@ zz <- cbind(as.data.frame(z),assay(vsd))
 dge <- as.data.frame(zz[order(zz$pvalue),])
 dge[1:20,1:6] %>% kbl(caption = "Top gene expression differences for contrast 1: Effect of the KO in untreated cells") %>% kable_paper("hover", full_width = F)
 dge1 <- dge
-
 d1up <- rownames(subset(dge1,padj <= 0.05 & log2FoldChange > 0))
 d1dn <- rownames(subset(dge1,padj <= 0.05 & log2FoldChange < 0))
+write.table(dge1,file="dge1.tsv",quote=FALSE,sep="\t")
 
 ```
 
@@ -208,9 +208,9 @@ zz <- cbind(as.data.frame(z),assay(vsd))
 dge <- as.data.frame(zz[order(zz$pvalue),])
 dge[1:20,1:6] %>% kbl(caption = "Top gene expression differences for contrast 2: Effect of the KO in treated cells") %>% kable_paper("hover", full_width = F)
 dge2 <- dge
-
 d2up <- rownames(subset(dge2,padj <= 0.05 & log2FoldChange > 0))
 d2dn <- rownames(subset(dge2,padj <= 0.05 & log2FoldChange < 0))
+write.table(dge2,file="dge2.tsv",quote=FALSE,sep="\t")
 
 ```
 
@@ -224,9 +224,9 @@ zz <- cbind(as.data.frame(z),assay(vsd))
 dge <- as.data.frame(zz[order(zz$pvalue),])
 dge[1:20,1:6] %>% kbl(caption = "Top gene expression differences for contrast 3: Effect of the drug in WT cells") %>% kable_paper("hover", full_width = F)
 dge3 <- dge
-
 d3up <- rownames(subset(dge3,padj <= 0.05 & log2FoldChange > 0))
 d3dn <- rownames(subset(dge3,padj <= 0.05 & log2FoldChange < 0))
+write.table(dge3,file="dge3.tsv",quote=FALSE,sep="\t")
 
 ```
 
@@ -240,9 +240,9 @@ zz <- cbind(as.data.frame(z),assay(vsd))
 dge <- as.data.frame(zz[order(zz$pvalue),])
 dge[1:20,1:6] %>% kbl(caption = "Top gene expression differences for contrast 3: Effect of the drug in KO cells") %>% kable_paper("hover", full_width = F)
 dge4 <- dge
-
 d4up <- rownames(subset(dge4,padj <= 0.05 & log2FoldChange > 0))
 d4dn <- rownames(subset(dge4,padj <= 0.05 & log2FoldChange < 0))
+write.table(dge4,file="dge4.tsv",quote=FALSE,sep="\t")
 
 ```
 
@@ -363,34 +363,34 @@ gt$gene <- sapply(strsplit(gt[,1]," "),"[[",2)
 m1 <- mitch_import(dge1, DEtype="deseq2",geneTable=gt)
 mres1 <- mitch_calc(m1, genesets, priority="effect")
 head(mres1$enrichment_result,20) %>% kbl(caption = "Top gene pathway differences in contrast 1") %>% kable_paper("hover", full_width = F)
-
 m1top <- subset(mres1$enrichment_result,p.adjustANOVA<0.05)
 m1up <- subset(m1top,s.dist>0)$set
 m1dn <- subset(m1top,s.dist<0)$set
+mitch_report(mres1,outfile="mitch1.html",overwrite=TRUE)
 
 m2 <- mitch_import(dge2, DEtype="deseq2",geneTable=gt)
 mres2 <- mitch_calc(m2, genesets, priority="effect")
 head(mres2$enrichment_result,20) %>% kbl(caption = "Top gene pathway differences in contrast 2") %>% kable_paper("hover", full_width = F)
-
 m2top <- subset(mres2$enrichment_result,p.adjustANOVA<0.05)
 m2up <- subset(m2top,s.dist>0)$set
 m2dn <- subset(m2top,s.dist<0)$set
+mitch_report(mres2,outfile="mitch2.html",overwrite=TRUE)
 
 m3 <- mitch_import(dge3, DEtype="deseq2",geneTable=gt)
 mres3 <- mitch_calc(m3, genesets, priority="effect")
 head(mres3$enrichment_result,20) %>% kbl(caption = "Top gene pathway differences in contrast 3") %>% kable_paper("hover", full_width = F)
-
 m3top <- subset(mres3$enrichment_result,p.adjustANOVA<0.05)
 m3up <- subset(m3top,s.dist>0)$set
 m3dn <- subset(m3top,s.dist<0)$set
+mitch_report(mres3,outfile="mitch3.html",overwrite=TRUE)
 
 m4 <- mitch_import(dge4, DEtype="deseq2",geneTable=gt)
 mres4 <- mitch_calc(m4, genesets, priority="effect")
 head(mres4$enrichment_result,20) %>% kbl(caption = "Top gene pathway differences in contrast 4") %>% kable_paper("hover", full_width = F)
-
 m4top <- subset(mres4$enrichment_result,p.adjustANOVA<0.05)
 m4up <- subset(m4top,s.dist>0)$set
 m4dn <- subset(m4top,s.dist<0)$set
+mitch_report(mres4,outfile="mitch4.html",overwrite=TRUE)
 
 ```
 
@@ -421,6 +421,7 @@ m <- mitch_import(mm, DEtype="deseq2",geneTable=gt)
 mres <- mitch_calc(m, genesets, priority="effect")
 head(mres$enrichment_result,20) %>% 
 kbl(caption = "Top gene pathway differences in contrast 1 and 4") %>% kable_paper("hover", full_width = F)
+mitch_report(mres,outfile="mitchmulti_effect.html",overwrite=TRUE)
 
 n=40
 mx <- as.matrix(mres$enrichment_result[1:n,4:5])
@@ -429,8 +430,8 @@ rownames(mx) <- mres$enrichment_result$set[1:n]
 
 colfunc <- colorRampPalette(c("blue", "white", "red"))
 
-heatmap.2(mx,trace="none",col=colfunc(25),scale="none", margins = c(10,25), cexRow=0.7,
-    main=paste("Top ranked Reactomes") )
+heatmap.2(mx,trace="none",col=colfunc(25),scale="none", margins = c(5,15), cexRow=0.7, 
+    cexCol=0.9, main=paste("Top ranked Reactomes") )
 
 ```
 
@@ -442,8 +443,9 @@ Gene sets are prioritised by standard deviation.
 mm <- list("KO"=dge1,"drug"=dge4)
 
 m <- mitch_import(mm, DEtype="deseq2",geneTable=gt)
-mres <- mitch_calc(m, genesets, priority="sd")
+mres <- mitch_calc(m, genesets, priority="SD")
 head(mres$enrichment_result,20) %>% kbl(caption = "Top gene pathway differences in contrast 1 and 4") %>% kable_paper("hover", full_width = F)
+mitch_report(mres,outfile="mitchmulti_discord.html",overwrite=TRUE)
 
 n=40
 mx <- as.matrix(mres$enrichment_result[1:n,4:5])
@@ -452,8 +454,8 @@ rownames(mx) <- mres$enrichment_result$set[1:n]
 
 colfunc <- colorRampPalette(c("blue", "white", "red"))
 
-heatmap.2(mx,trace="none",col=colfunc(25),scale="none", margins = c(10,25), cexRow=0.7,
-    main=paste("Top ranked Reactomes") )
+heatmap.2(mx,trace="none",col=colfunc(25),scale="none", margins = c(5,15), cexRow=0.7,
+    cexCol=0.9, main=paste("Top ranked Reactomes") )
 
 ```
 
