@@ -34,6 +34,8 @@ suppressPackageStartupMessages({
     library("limma")
     library("topconfects")
     library("kableExtra")
+    library("vioplot")
+    library("beeswarm")
 })
 
 ```
@@ -73,6 +75,8 @@ l <- lapply(labels,function(x) { rowSums(xx[,grep(x,colnames(xx))]) } )
 ll <- do.call(cbind,l)
 colnames(ll) <- labels
 ll <- as.data.frame(ll[,order(colnames(ll))])
+
+rpm <- ll/colSums(ll) *1e6
 
 ```
 
@@ -185,8 +189,6 @@ heatmap.2(cor(ll3),trace="n",main="Pearson correlation heatmap",margin=c(8,8))
 
 ```
 
-
-
 ## Set up the different datasets for differential expression analysis
 
 Don't forget to remove poorly detected genes from the matrix with a threshold of 10 reads per sample on average.
@@ -206,18 +208,22 @@ There are 4 contrasts to set up.
 ss1 <- ss[which(ss$trt=="FALSE"),]
 xx1 <- ll[which(colnames(ll) %in% rownames(ss1))]
 xx1 <- xx1[which(rowSums(xx1)>=10),]
+rpm1 <- xx1/colSums(xx1) *1e6
 
 ss2 <- ss[which(ss$trt=="TRUE"),]
 xx2 <- ll[which(colnames(ll) %in% rownames(ss2))]
 xx2 <- xx2[which(rowSums(xx2)>=10),]
+rpm2 <- xx1/colSums(xx2) *1e6
 
 ss3 <- ss[which(ss$ko=="FALSE"),]
 xx3 <- ll[which(colnames(ll) %in% rownames(ss3))]
 xx3 <- xx3[which(rowSums(xx3)>=10),]
+rpm3 <- xx1/colSums(xx3) *1e6
 
 ss4 <- ss[which(ss$ko=="TRUE"),]
 xx4 <- ll[which(colnames(ll) %in% rownames(ss4))]
 xx4 <- xx4[which(rowSums(xx4)>=10),]
+rpm4 <- xx1/colSums(xx4) *1e6
 
 ```
 
@@ -318,6 +324,8 @@ maplot <- function(de,contrast_name) {
 }
 
 make_volcano <- function(de,name) {
+    de$pvalue[which(de$pvalue==0)] <- 1e-320
+    de <- de[which(! is.na( de$pvalue)),]
     sig <- subset(de,padj<0.05)
     N_SIG=nrow(sig)
     N_UP=nrow(subset(sig,log2FoldChange>0))
@@ -331,6 +339,25 @@ make_volcano <- function(de,name) {
     points(sig$log2FoldChange,-log10(sig$pval),cex=0.5,pch=19,col="red")
 }
 
+make_volcano2 <- function(de,name) {
+    de$pvalue[which(de$pvalue==0)] <- 1e-320
+    de <- de[which(! is.na( de$pvalue)),]
+    sig <- subset(de,padj<0.05)
+    N_SIG=nrow(sig)
+    N_UP=nrow(subset(sig,log2FoldChange>0))
+    N_DN=nrow(subset(sig,log2FoldChange<0))
+    DET=nrow(de)
+    HEADER=paste(N_SIG,"@5%FDR,", N_UP, "up", N_DN, "dn", DET, "detected")
+    top <- head(sig,30)
+    mylabels <- sapply(strsplit(rownames(top)," "),"[[",2)
+    plot(de$log2FoldChange,-log10(de$pval),cex=0.5,pch=19,col="darkgray",
+        main=name, xlab="log2 FC", ylab="-log10 pval")
+    mtext(HEADER)
+    grid()
+    points(sig$log2FoldChange,-log10(sig$pval),cex=0.5,pch=19,col="red")
+    text(top$log2FoldChange+0.2,-log10(top$pval),labels=mylabels, srt=35 ,cex=0.7)
+}
+
 make_heatmap <- function(de,name,myss,mx,n=30){
   colfunc <- colorRampPalette(c("blue", "white", "red"))
   mxn <- mx/rowSums(mx)*1000000
@@ -339,21 +366,38 @@ make_heatmap <- function(de,name,myss,mx,n=30){
     main=paste("Top ranked",n,"genes in",name) , ColSideColors = myss$cols  )
 }
 
+make_heatmap2 <- function(de,name,myss,mx,n=30){
+  colfunc <- colorRampPalette(c("blue", "white", "red"))
+  mxn <- mx/rowSums(mx)*1000000
+  x <- mxn[which(rownames(mxn) %in% rownames(head(de,n))),]
+  rownames(x) <- sapply(strsplit(rownames(x)," "),"[[",2)
+  heatmap.2(as.matrix(x),trace="none",col=colfunc(25),scale="row", margins = c(10,15), cexRow=0.7,
+    main=paste("Top ranked",n,"genes in",name) , ColSideColors = myss$cols  )
+}
+
 maplot(dge1,"Cont1: Effect of KO in untr cells")
 make_volcano(dge1,"Cont1: Effect of KO in untr cells")
+make_volcano2(dge1,"Cont1: Effect of KO in untr cells")
 make_heatmap(dge1,"Cont1: Effect of KO in untr cells",ss1,xx1,n=50)
+make_heatmap2(dge1,"Cont1: Effect of KO in untr cells",ss1,xx1,n=50)
 
 maplot(dge2,"Cont2: Effect of KO in trt cells")
 make_volcano(dge2,"Cont2: Effect of KO in trt cells")
+make_volcano2(dge2,"Cont2: Effect of KO in trt cells")
 make_heatmap(dge2,"Cont2: Effect of KO in trt cells",ss2,xx2,n=50)
+make_heatmap2(dge2,"Cont2: Effect of KO in trt cells",ss2,xx2,n=50)
 
 maplot(dge3,"Cont3: Effect of drug in WT cells")
 make_volcano(dge3,"Cont3: Effect of drug in WT cells")
+make_volcano2(dge3,"Cont3: Effect of drug in WT cells")
 make_heatmap(dge3,"Cont3: Effect of drug in WT cells",ss3,xx3,n=50)
+make_heatmap2(dge3,"Cont3: Effect of drug in WT cells",ss3,xx3,n=50)
 
 maplot(dge4,"Cont4: Effect of drug in KO cells")
 make_volcano(dge4,"Cont4: Effect of drug in KO cells")
+make_volcano2(dge4,"Cont4: Effect of drug in KO cells")
 make_heatmap(dge4,"Cont4: Effect of drug in KO cells",ss4,xx4,n=50)
+make_heatmap2(dge4,"Cont4: Effect of drug in KO cells",ss4,xx4,n=50)
 
 ```
 
@@ -439,6 +483,64 @@ write.table(mres4$enrichment_result,file="mitch4.tsv",quote=FALSE,sep="\t",row.n
 
 ```
 
+Make some ridge plots.
+
+```{r,ridgeplots0}
+
+myres <- list(mres1,mres2,mres3,mres4) 
+z <- lapply(myres, function(mres) {
+  sets <- head(mres$enrichment_result,10)
+  sets <- sets[order(sets$s.dist),"set"]
+  ridgedata <- lapply( sets , function(myset) {
+    genes <- genesets[[which(names(genesets) == myset)]]
+    generanks <- mres$ranked_profile[which(rownames(mres$ranked_profile) %in% genes),]
+    return(generanks)
+  })
+  names(ridgedata) <- sets
+  myrange <- range(mres$ranked_profile[,1])
+  par(mar=c(5,20,3,2))
+ 
+ vioplot(ridgedata,horizontal=TRUE,las=1,
+    ylim=myrange,main="Top 10 genesets",
+    xlab="differential gene rank")
+
+ vioplot(ridgedata,horizontal=TRUE,las=1,
+    ylim=myrange,col="white",main="Top 10 genesets",
+    xlab="differential gene rank",
+    rectCol="gray")
+  beeswarm(ridgedata,add=TRUE,horizontal = TRUE, pch=19,cex=0.6,corral = "gutter")
+})
+
+```
+
+Make some heatmaps
+
+```{r,heatmaps}
+
+sets <- head(mres1$enrichment_result$set,10)
+
+z <- lapply(sets, function(set){
+  genes <- genesets[[which(names(genesets) == set)]]
+  refgenes <- sapply(strsplit(rownames(rpm1)," "),"[[",2)
+  hm <- as.matrix(rpm1[which(refgenes %in% genes),])
+  hm <- hm/rowMeans(hm)
+  colfunc <- colorRampPalette(c("blue", "white", "red"))
+  heatmap.2(hm,trace="none",col=colfunc(25),scale="row", margins = c(6,15), cexRow=0.9,
+    cexCol=0.9, main=paste(set) )
+})
+
+z <- lapply(sets, function(set){
+  genes <- genesets[[which(names(genesets) == set)]]
+  refgenes <- sapply(strsplit(rownames(rpm)," "),"[[",2)
+  hm <- as.matrix(rpm[which(refgenes %in% genes),])
+  hm <- hm/rowMeans(hm)
+  colfunc <- colorRampPalette(c("blue", "white", "red"))
+  heatmap.2(hm,trace="none",col=colfunc(25),scale="row", margins = c(6,15), cexRow=0.7,
+    cexCol=0.9, main=paste(set) )
+})
+
+```
+
 Now an Euler diagram of differentially regulated gene sets from contrasts 1 and 4.
 
 ```{r,euler3}
@@ -505,7 +607,240 @@ heatmap.2(mx,trace="none",col=colfunc(25),scale="none", margins = c(5,15), cexRo
 
 ```
 
+## Custom gene sets
+
+```{r,mitch_custom1}
+
+custom_set_names <- readLines("custom_pathway_list.txt")
+custom_sets <- genesets[which(names(genesets) %in% custom_set_names)]
+
+m1 <- mitch_import(dge1, DEtype="deseq2",geneTable=gt)
+mres1 <- mitch_calc(m1, custom_sets, priority="effect")
+head(mres1$enrichment_result,20) %>% kbl(caption = "Top mito pathway differences in contrast 1") %>% kable_paper("hover", full_width = F)
+m1top <- subset(mres1$enrichment_result,p.adjustANOVA<0.05)
+m1up <- subset(m1top,s.dist>0)$set
+m1dn <- subset(m1top,s.dist<0)$set
+mitch_report(mres1,outfile="mitch_mito1.html",overwrite=TRUE)
+write.table(mres1$enrichment_result,file="mitch_mito1.tsv",quote=FALSE,sep="\t",row.names=FALSE)
+
+m2 <- mitch_import(dge2, DEtype="deseq2",geneTable=gt)
+mres2 <- mitch_calc(m2, custom_sets, priority="effect")
+head(mres2$enrichment_result,20) %>% kbl(caption = "Top mito pathway differences in contrast 2") %>% kable_paper("hover", full_width = F)
+m2top <- subset(mres2$enrichment_result,p.adjustANOVA<0.05)
+m2up <- subset(m2top,s.dist>0)$set
+m2dn <- subset(m2top,s.dist<0)$set
+mitch_report(mres2,outfile="mitch_mito2.html",overwrite=TRUE)
+write.table(mres2$enrichment_result,file="mitch_mito2.tsv",quote=FALSE,sep="\t",row.names=FALSE)
+
+m3 <- mitch_import(dge3, DEtype="deseq2",geneTable=gt)
+mres3 <- mitch_calc(m3, custom_sets, priority="effect")
+head(mres3$enrichment_result,20) %>% kbl(caption = "Top mito pathway differences in contrast 3") %>% kable_paper("hover", full_width = F)
+m3top <- subset(mres3$enrichment_result,p.adjustANOVA<0.05)
+m3up <- subset(m3top,s.dist>0)$set
+m3dn <- subset(m3top,s.dist<0)$set
+mitch_report(mres3,outfile="mitch_mito3.html",overwrite=TRUE)
+write.table(mres3$enrichment_result,file="mitch_mito3.tsv",quote=FALSE,sep="\t",row.names=FALSE)
+
+m4 <- mitch_import(dge4, DEtype="deseq2",geneTable=gt)
+mres4 <- mitch_calc(m4, custom_sets, priority="effect")
+head(mres4$enrichment_result,20) %>% kbl(caption = "Top mito pathway differences in contrast 4") %>% kable_paper("hover", full_width = F)
+m4top <- subset(mres4$enrichment_result,p.adjustANOVA<0.05)
+m4up <- subset(m4top,s.dist>0)$set
+m4dn <- subset(m4top,s.dist<0)$set
+mitch_report(mres4,outfile="mitch_mito4.html",overwrite=TRUE)
+write.table(mres4$enrichment_result,file="mitch_mito4.tsv",quote=FALSE,sep="\t",row.names=FALSE)
+
+```
+
+Make some ridge plots.  
+
+```{r,ridgeplots1}
+
+myres <- list(mres1,mres2,mres3,mres4)
+z <- lapply(myres, function(mres) {
+  sets <- head(mres$enrichment_result,10)
+  sets <- sets[order(sets$s.dist),"set"]
+  ridgedata <- lapply( sets , function(myset) {
+    genes <- genesets[[which(names(genesets) == myset)]]
+    generanks <- mres$ranked_profile[which(rownames(mres$ranked_profile) %in% genes),]
+    return(generanks)
+  })
+  names(ridgedata) <- sets
+  myrange <- range(mres$ranked_profile[,1])
+  par(mar=c(5,20,3,2))
+  
+  vioplot(ridgedata,horizontal=TRUE,las=1,
+    ylim=myrange,main="Top 10 genesets",
+    xlab="differential gene rank")
+
+  vioplot(ridgedata,horizontal=TRUE,las=1,
+    ylim=myrange,col="white",main="Top 10 genesets",
+    xlab="differential gene rank",
+    rectCol="gray")
+  beeswarm(ridgedata,add=TRUE,horizontal = TRUE, pch=19,cex=0.6,corral = "gutter")
+})
+
+# now custom gene sets part 1
+custom_set_names <- readLines("custom_pathway_list.txt")
+myres <- list(mres1,mres2,mres3,mres4)
+z <- lapply(myres, function(mres) {
+  sets <- custom_set_names
+  mres$enrichment_result <- mres$enrichment_result[which(mres$enrichment_result$set %in% sets),]
+  mres$enrichment_result <- mres$enrichment_result[order(mres$enrichment_result$s.dist),]
+  sets <- mres$enrichment_result$set
+  ridgedata <- lapply( sets , function(myset) {
+    genes <- genesets[[which(names(genesets) == myset)]]
+    generanks <- mres$ranked_profile[which(rownames(mres$ranked_profile) %in% genes),]
+    return(generanks)
+  })
+  names(ridgedata) <- sets
+  myrange <- range(mres$ranked_profile[,1])
+  par(mar=c(5,20,3,2))
+
+  vioplot(ridgedata,horizontal=TRUE,las=1,
+    ylim=myrange,main="Gene sets of interest",
+    xlab="differential gene rank")
+
+
+  vioplot(ridgedata,horizontal=TRUE,las=1,
+    ylim=myrange,col="white",main="Gene sets of interest",
+    rectCol="gray", xlab="differential gene rank")
+  beeswarm(ridgedata,add=TRUE,horizontal = TRUE, pch=19,cex=0.6,corral = "gutter")
+})
+
+
+
+# now custom gene sets part 2
+custom_set_names2 <- readLines("custom_pathway_list2.txt")
+myres <- list(mres1,mres2,mres3,mres4)
+z <- lapply(myres, function(mres) {
+  sets <- custom_set_names2[which( custom_set_names2 %in% names(custom_sets))]
+  mres$enrichment_result <- mres$enrichment_result[which(mres$enrichment_result$set %in% sets),]
+  mres$enrichment_result <- mres$enrichment_result[order(mres$enrichment_result$s.dist),]
+  sets <- mres$enrichment_result$set
+  ridgedata <- lapply( sets , function(myset) {
+    genes <- genesets[[which(names(genesets) == myset)]]
+    generanks <- mres$ranked_profile[which(rownames(mres$ranked_profile) %in% genes),]
+    return(generanks)
+  })
+  names(ridgedata) <- sets
+  myrange <- range(mres$ranked_profile[,1])
+  par(mar=c(5,20,3,2))
+
+  vioplot(ridgedata,horizontal=TRUE,las=1,
+    ylim=myrange,main="Gene sets of interest",
+    xlab="differential gene rank")
+
+  vioplot(ridgedata,horizontal=TRUE,las=1,
+    ylim=myrange,col="white",main="Gene sets of interest",
+    rectCol="gray", xlab="differential gene rank")
+  beeswarm(ridgedata,add=TRUE,horizontal = TRUE, pch=19,cex=1,corral = "gutter")
+})
+
+
+```
+
+Now make some heatmaps
+
+```{r,heat_customgs}
+
+sets <- names(custom_sets)
+
+z <- lapply(sets, function(set){
+  genes <- genesets[[which(names(genesets) == set)]]
+  refgenes <- sapply(strsplit(rownames(rpm1)," "),"[[",2)
+  hm <- as.matrix(rpm1[which(refgenes %in% genes),])
+  hm <- hm/rowMeans(hm)
+  colfunc <- colorRampPalette(c("blue", "white", "red"))
+  heatmap.2(hm,trace="none",col=colfunc(25),scale="row", margins = c(6,15), cexRow=0.9,
+    cexCol=0.9, main=paste(set) )
+})
+
+z <- lapply(sets, function(set){
+  genes <- genesets[[which(names(genesets) == set)]]
+  refgenes <- sapply(strsplit(rownames(rpm)," "),"[[",2)
+  hm <- as.matrix(rpm[which(refgenes %in% genes),])
+  hm <- hm/rowMeans(hm)
+  colfunc <- colorRampPalette(c("blue", "white", "red"))
+  heatmap.2(hm,trace="none",col=colfunc(25),scale="row", margins = c(6,15), cexRow=0.7,
+    cexCol=0.9, main=paste(set) )
+})
+
+
+refgenes <- sapply(strsplit(rownames(rpm1)," "),"[[",2)
+gshm <- lapply(sets, function(set){
+  genes <- genesets[[which(names(genesets) == set)]]
+  hm <- as.matrix(rpm1[which(refgenes %in% genes),])
+  hm <- hm/rowMeans(hm)
+  return(colMeans(hm))
+})
+
+gshm <- do.call(rbind,gshm)
+rownames(gshm) <- sets
+
+colfunc <- colorRampPalette(c("blue", "white", "red"))
+heatmap.2(gshm,trace="none",col=colfunc(25),scale="row", margins = c(6,15), cexRow=0.7,
+  cexCol=0.9, main="Gene set heatmap" )
+
+refgenes <- sapply(strsplit(rownames(rpm)," "),"[[",2)
+gshm <- lapply(sets, function(set){
+  genes <- genesets[[which(names(genesets) == set)]]
+  hm <- as.matrix(rpm[which(refgenes %in% genes),])
+  hm <- hm/rowMeans(hm)
+  hm[is.na(hm)] <- 0
+  return(colMeans(hm))
+})
+
+gshm <- do.call(rbind,gshm)
+rownames(gshm) <- sets
+
+colfunc <- colorRampPalette(c("blue", "white", "red"))
+heatmap.2(gshm,trace="none",col=colfunc(25),scale="row", margins = c(6,15), cexRow=0.7,
+  cexCol=0.9, main="Gene set heatmap" )
+
+```
+
+Mitch multi contrasts with custom gene sets
+
+```{r,mitch_custom2}
+
+mm <- list("KO"=dge1,"drug"=dge4)
+m <- mitch_import(mm, DEtype="deseq2",geneTable=gt)
+
+mres <- mitch_calc(m, custom_sets, priority="effect")
+head(mres$enrichment_result,20) %>%
+  kbl(caption = "Top mito pathway differences in contrast 1 and 4") %>% kable_paper("hover", full_width = F)
+mitch_report(mres,outfile="mitchmulti_effect_mito.html",overwrite=TRUE)
+write.table(mres$enrichment_result,file="mitch_multi_effect_mito.tsv",quote=FALSE,sep="\t",row.names=FALSE)
+mx <- as.matrix(mres$enrichment_result[,4:5])
+rownames(mx) <- mres$set
+rownames(mx) <- mres$enrichment_result$set
+
+colfunc <- colorRampPalette(c("blue", "white", "red"))
+
+heatmap.2(mx,trace="none",col=colfunc(25),scale="none", margins = c(5,22), cexRow=1,
+    cexCol=0.9, main=paste("Top ranked Reactomes") )
+
+
+mres <- mitch_calc(m, custom_sets, priority="SD")
+head(mres$enrichment_result,20) %>% kbl(caption = "Top mito pathway differences in contrast 1 and 4") %>% kable_paper("hover", full_width = F)
+mitch_report(mres,outfile="mitchmulti_discord_mito.html",overwrite=TRUE)
+write.table(mres$enrichment_result,file="mitch_multi_discord_mito.tsv",quote=FALSE,sep="\t",row.names=FALSE)
+
+mx <- as.matrix(mres$enrichment_result[,4:5])
+rownames(mx) <- mres$set
+rownames(mx) <- mres$enrichment_result$set
+
+colfunc <- colorRampPalette(c("blue", "white", "red"))
+
+heatmap.2(mx,trace="none",col=colfunc(25),scale="none", margins = c(5,22), cexRow=1,
+    cexCol=0.9, main=paste("Top ranked Reactomes") )
+
+```
+
 ## Conclusion
+
+TODO
 
 ## Session information
 
