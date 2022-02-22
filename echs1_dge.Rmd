@@ -162,6 +162,12 @@ plot(mds, xlab="Coordinate 1", ylab="Coordinate 2",
   type = "p",bty="n",pch=19, cex=4 ,col=ss$cols)
 text(mds, labels=rownames(mds) )
 
+pdf("f1b.pdf")
+plot(mds, xlab="Coordinate 1", ylab="Coordinate 2",
+  type = "p",bty="n",pch=19, cex=4 ,col=ss$cols)
+text(mds, labels=rownames(mds) )
+dev.off()
+
 ```
 
 ## MDS plot for dNs samples
@@ -306,6 +312,7 @@ Yellow shows relatively low QuickDASH score and orange shows high score.
 ```{r,deplots1}
 
 maplot <- function(de,contrast_name) {
+  de <- de[which(!is.na(de$padj)),]
   sig <-subset(de, padj < 0.05 )
   up <-rownames(subset(de, padj < 0.05 & log2FoldChange > 0))
   dn <-rownames(subset(de, padj < 0.05 & log2FoldChange < 0))
@@ -324,8 +331,8 @@ maplot <- function(de,contrast_name) {
 }
 
 make_volcano <- function(de,name) {
+    de <- de[which(!is.na(de$padj)),]
     de$pvalue[which(de$pvalue==0)] <- 1e-320
-    de <- de[which(! is.na( de$pvalue)),]
     sig <- subset(de,padj<0.05)
     N_SIG=nrow(sig)
     N_UP=nrow(subset(sig,log2FoldChange>0))
@@ -340,8 +347,8 @@ make_volcano <- function(de,name) {
 }
 
 make_volcano2 <- function(de,name) {
+    de <- de[which(!is.na(de$padj)),]
     de$pvalue[which(de$pvalue==0)] <- 1e-320
-    de <- de[which(! is.na( de$pvalue)),]
     sig <- subset(de,padj<0.05)
     N_SIG=nrow(sig)
     N_UP=nrow(subset(sig,log2FoldChange>0))
@@ -371,15 +378,21 @@ make_heatmap2 <- function(de,name,myss,mx,n=30){
   mxn <- mx/rowSums(mx)*1000000
   x <- mxn[which(rownames(mxn) %in% rownames(head(de,n))),]
   rownames(x) <- sapply(strsplit(rownames(x)," "),"[[",2)
-  heatmap.2(as.matrix(x),trace="none",col=colfunc(25),scale="row", margins = c(10,15), cexRow=0.7,
+  heatmap.2(as.matrix(x),trace="none",col=colfunc(25),scale="row", margins = c(10,15), cexRow=0.6,
     main=paste("Top ranked",n,"genes in",name) , ColSideColors = myss$cols  )
 }
 
 maplot(dge1,"Cont1: Effect of KO in untr cells")
 make_volcano(dge1,"Cont1: Effect of KO in untr cells")
+pdf("f1c.pdf")
+make_volcano(dge1,"Cont1: Effect of KO in untr cells")
+dev.off()
 make_volcano2(dge1,"Cont1: Effect of KO in untr cells")
 make_heatmap(dge1,"Cont1: Effect of KO in untr cells",ss1,xx1,n=50)
 make_heatmap2(dge1,"Cont1: Effect of KO in untr cells",ss1,xx1,n=50)
+pdf("f1d.pdf")
+make_heatmap2(dge1,"Cont1: Effect of KO in untr cells",ss1,xx1,n=50)
+dev.off()
 
 maplot(dge2,"Cont2: Effect of KO in trt cells")
 make_volcano(dge2,"Cont2: Effect of KO in trt cells")
@@ -453,6 +466,19 @@ m1up <- subset(m1top,s.dist>0)$set
 m1dn <- subset(m1top,s.dist<0)$set
 mitch_report(mres1,outfile="mitch1.html",overwrite=TRUE)
 write.table(mres1$enrichment_result,file="mitch1.tsv",quote=FALSE,sep="\t",row.names=FALSE)
+
+m1top_up <- head(subset(m1top,s.dist>0),10)[,"s.dist"]
+names(m1top_up) <- head(subset(m1top,s.dist>0),10)[,"set"]
+m1top_dn <- head(subset(m1top,s.dist<0),10)[,"s.dist"]
+names(m1top_dn) <- head(subset(m1top,s.dist<0),10)[,"set"]
+m1top_updn <- c(m1top_up,m1top_dn)
+m1top_updn <- m1top_updn[order(m1top_updn)]
+
+pdf("f2b.pdf")
+par(mar=c(5,25,3,1))
+barplot(m1top_updn,horiz=TRUE,las=1,col="darkgray",xlab="Enrichment score",cex.names=0.8,xlim=c(-1,1))
+grid()
+dev.off()
 
 m2 <- mitch_import(dge2, DEtype="deseq2",geneTable=gt)
 mres2 <- mitch_calc(m2, genesets, priority="effect")
@@ -680,6 +706,30 @@ z <- lapply(myres, function(mres) {
   beeswarm(ridgedata,add=TRUE,horizontal = TRUE, pch=19,cex=0.6,corral = "gutter")
 })
 
+
+#Fig2c
+myres <- mres1
+  sets <- head(myres$enrichment_result,10)
+  sets <- sets[order(sets$s.dist),"set"]
+  ridgedata <- lapply( sets , function(myset) {
+    genes <- genesets[[which(names(genesets) == myset)]]
+    generanks <- myres$ranked_profile[which(rownames(myres$ranked_profile) %in% genes),]
+    return(generanks)
+  })
+  names(ridgedata) <- sets
+  myrange <- range(myres$ranked_profile[,1])
+
+pdf("fig2C.pdf")
+  par(mar=c(5,20,3,2))
+  vioplot(ridgedata,horizontal=TRUE,las=1,
+    ylim=myrange,main="Top 10 genesets",
+    xlab="differential gene rank")
+dev.off()
+
+
+
+
+
 # now custom gene sets part 1
 custom_set_names <- readLines("custom_pathway_list.txt")
 myres <- list(mres1,mres2,mres3,mres4)
@@ -761,6 +811,7 @@ z <- lapply(sets, function(set){
   refgenes <- sapply(strsplit(rownames(rpm)," "),"[[",2)
   hm <- as.matrix(rpm[which(refgenes %in% genes),])
   hm <- hm/rowMeans(hm)
+  hm[is.na(hm)] <- 0
   colfunc <- colorRampPalette(c("blue", "white", "red"))
   heatmap.2(hm,trace="none",col=colfunc(25),scale="row", margins = c(6,15), cexRow=0.7,
     cexCol=0.9, main=paste(set) )
