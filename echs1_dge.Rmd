@@ -75,8 +75,10 @@ l <- lapply(labels,function(x) { rowSums(xx[,grep(x,colnames(xx))]) } )
 ll <- do.call(cbind,l)
 colnames(ll) <- labels
 ll <- as.data.frame(ll[,order(colnames(ll))])
+write.table(ll,file="counts.tsv",sep="\t",quote=FALSE)
 
 rpm <- ll/colSums(ll) *1e6
+write.table(rpm,file="rpm.tsv",sep="\t",quote=FALSE)
 
 ```
 
