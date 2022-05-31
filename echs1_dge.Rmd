@@ -144,6 +144,14 @@ plot(mds, xlab="Coordinate 1", ylab="Coordinate 2",
   type = "p",bty="n",pch=19, cex=4 ,col=ss$cols)
 text(mds, labels=rownames(mds) )
 
+pdf("mds1.pdf")
+
+plot(mds, xlab="Coordinate 1", ylab="Coordinate 2",
+  type = "p",bty="n",pch=19, cex=4 ,col=ss$cols)
+text(mds, labels=rownames(mds) )
+
+dev.off()
+
 ```
 
 ## Correlation heatmap
@@ -151,6 +159,10 @@ text(mds, labels=rownames(mds) )
 ```{r,cor1,fig.height=7,fig.width=7}
 
 heatmap.2(cor(ll),trace="n",main="Pearson correlation heatmap",margin=c(8,8))
+
+pdf("cor1.pdf")
+heatmap.2(cor(ll),trace="n",main="Pearson correlation heatmap",margin=c(8,8))
+dev.off()
 
 ```
 
@@ -166,7 +178,7 @@ plot(mds, xlab="Coordinate 1", ylab="Coordinate 2",
   type = "p",bty="n",pch=19, cex=4 ,col=ss$cols)
 text(mds, labels=rownames(mds) )
 
-pdf("f1b.pdf")
+pdf("mds2.pdf")
 plot(mds, xlab="Coordinate 1", ylab="Coordinate 2",
   type = "p",bty="n",pch=19, cex=4 ,col=ss$cols)
 text(mds, labels=rownames(mds) )
@@ -186,6 +198,12 @@ plot(mds, xlab="Coordinate 1", ylab="Coordinate 2",
   type = "p",bty="n",pch=19, cex=4 ,col=ss$cols)
 text(mds, labels=rownames(mds) )
 
+pdf("mds3.pdf")
+plot(mds, xlab="Coordinate 1", ylab="Coordinate 2",
+  type = "p",bty="n",pch=19, cex=4 ,col=ss$cols)
+text(mds, labels=rownames(mds) )
+dev.off()
+
 ```
 
 
@@ -196,6 +214,14 @@ text(mds, labels=rownames(mds) )
 heatmap.2(cor(ll2),trace="n",main="Pearson correlation heatmap",margin=c(8,8))
 
 heatmap.2(cor(ll3),trace="n",main="Pearson correlation heatmap",margin=c(8,8))
+
+pdf("cor2.pdf")
+heatmap.2(cor(ll2),trace="n",main="Pearson correlation heatmap",margin=c(8,8))
+dev.off()
+
+pdf("cor3.pdf")
+heatmap.2(cor(ll3),trace="n",main="Pearson correlation heatmap",margin=c(8,8))
+dev.off()
 
 ```
 
@@ -213,8 +239,8 @@ There are 4 contrasts to set up.
 
 4. Effect of the drug in KO cells
 
-5. CON ut vs KO dNs. (what was altered in ECHS1 KO, that has been returned to normal levels (and no longer significantly different) to 
-CON ut).
+5. CON ut vs KO dNs. (what was altered in ECHS1 KO, that has been returned 
+to normal levels (and no longer significantly different) to CON ut).
  
 ```{r,filter}
 
@@ -425,17 +451,18 @@ make_heatmap2 <- function(de,name,myss,mx,n=30){
     main=paste("Top ranked",n,"genes in",name) , ColSideColors = myss$cols  )
 }
 
+mitch_barplot <- function(res){
+  sig <- head(subset(res$enrichment_result,p.adjustANOVA<0.05),30)
+  sig <- sig[order(sig$s.dist),]
+  par(mar=c(3,25,1,1)); barplot(sig$s.dist,horiz=TRUE,las=2,cex.names = 0.6,cex.axis = 0.6,
+    names.arg=sig$set,main="Enrichment score") ;grid()
+}
+
 maplot(dge1,"Cont1: Effect of KO in untr cells")
 make_volcano(dge1,"Cont1: Effect of KO in untr cells")
-pdf("f1c.pdf")
-make_volcano(dge1,"Cont1: Effect of KO in untr cells")
-dev.off()
 make_volcano2(dge1,"Cont1: Effect of KO in untr cells")
 make_heatmap(dge1,"Cont1: Effect of KO in untr cells",ss1,xx1,n=50)
 make_heatmap2(dge1,"Cont1: Effect of KO in untr cells",ss1,xx1,n=50)
-pdf("f1d.pdf")
-make_heatmap2(dge1,"Cont1: Effect of KO in untr cells",ss1,xx1,n=50)
-dev.off()
 
 maplot(dge2,"Cont2: Effect of KO in trt cells")
 make_volcano(dge2,"Cont2: Effect of KO in trt cells")
@@ -455,11 +482,158 @@ make_volcano2(dge4,"Cont4: Effect of drug in KO cells")
 make_heatmap(dge4,"Cont4: Effect of drug in KO cells",ss4,xx4,n=50)
 make_heatmap2(dge4,"Cont4: Effect of drug in KO cells",ss4,xx4,n=50)
 
-maplot(dge5,"Cont5: Effect of drug in KO cells")
-make_volcano(dge5,"Cont5: Effect of drug in KO cells")
-make_volcano2(dge5,"Cont5: Effect of drug in KO cells")
-make_heatmap(dge5,"Cont5: Effect of drug in KO cells",ss5,xx5,n=50)
-make_heatmap2(dge5,"Cont5: Effect of drug in KO cells",ss5,xx5,n=50)
+maplot(dge5,"CON ut vs KO dNs")
+make_volcano(dge5,"CON ut vs KO dNs")
+make_volcano2(dge5,"CON ut vs KO dNs")
+make_heatmap(dge5,"CON ut vs KO dNs",ss5,xx5,n=50)
+make_heatmap2(dge5,"CON ut vs KO dNs",ss5,xx5,n=50)
+
+pdf("dge1.pdf")
+maplot(dge1,"Cont1: Effect of KO in untr cells")
+make_volcano(dge1,"Cont1: Effect of KO in untr cells")
+make_volcano2(dge1,"Cont1: Effect of KO in untr cells")
+make_heatmap(dge1,"Cont1: Effect of KO in untr cells",ss1,xx1,n=50)
+make_heatmap2(dge1,"Cont1: Effect of KO in untr cells",ss1,xx1,n=50)
+dev.off()
+
+pdf("dge2.pdf")
+maplot(dge2,"Cont2: Effect of KO in trt cells")
+make_volcano(dge2,"Cont2: Effect of KO in trt cells")
+make_volcano2(dge2,"Cont2: Effect of KO in trt cells")
+make_heatmap(dge2,"Cont2: Effect of KO in trt cells",ss2,xx2,n=50)
+make_heatmap2(dge2,"Cont2: Effect of KO in trt cells",ss2,xx2,n=50)
+dev.off()
+
+pdf("dge3.pdf")
+maplot(dge3,"Cont3: Effect of drug in WT cells")
+make_volcano(dge3,"Cont3: Effect of drug in WT cells")
+make_volcano2(dge3,"Cont3: Effect of drug in WT cells")
+make_heatmap(dge3,"Cont3: Effect of drug in WT cells",ss3,xx3,n=50)
+make_heatmap2(dge3,"Cont3: Effect of drug in WT cells",ss3,xx3,n=50)
+dev.off()
+
+pdf("dge4.pdf")
+maplot(dge4,"Cont4: Effect of drug in KO cells")
+make_volcano(dge4,"Cont4: Effect of drug in KO cells")
+make_volcano2(dge4,"Cont4: Effect of drug in KO cells")
+make_heatmap(dge4,"Cont4: Effect of drug in KO cells",ss4,xx4,n=50)
+make_heatmap2(dge4,"Cont4: Effect of drug in KO cells",ss4,xx4,n=50)
+dev.off()
+
+pdf("dge5.pdf")
+maplot(dge5,"CON ut vs KO dNs")
+make_volcano(dge5,"CON ut vs KO dNs")
+make_volcano2(dge5,"CON ut vs KO dNs")
+make_heatmap(dge5,"CON ut vs KO dNs",ss5,xx5,n=50)
+make_heatmap2(dge5,"CON ut vs KO dNs",ss5,xx5,n=50)
+dev.off()
+
+```
+
+## Heatmap of DEGs
+
+Contrast 1 and 4 - get top 25 genes and make heatmap of all sample groups.
+
+```{r,heat1}
+
+g1 <- head(rownames(dge1),25)
+g4 <- head(rownames(dge4),25)
+g14 <- union(g1,g4)
+
+fc1 <- dge1[which(rownames(dge1) %in% g14),"log2FoldChange",drop=F]
+
+rpm14 <- rpm[which(rownames(rpm) %in% g14),]
+rpm14 <- merge(rpm14,fc1,by=0)
+rpm14 <- rpm14[order(rpm14$log2FoldChange),]
+rpm14$log2FoldChange=NULL
+rownames(rpm14) <- rpm14$Row.names
+rpm14$Row.names=NULL
+rownames(rpm14) <- sapply(strsplit(rownames(rpm14)," "),"[[",2)
+rpm14 <- rpm14[,rev(order(colnames(rpm14)))]
+
+# reorder columns
+rpm14 <- rpm14[,c( grep("CON_ut",colnames(rpm14)) , grep("KO_ut",colnames(rpm14)) , grep("KO_dN",colnames(rpm14)) , grep("CON_dN",colnames(rpm14)) )]
+
+colfunc <- colorRampPalette(c("blue", "white", "red"))
+
+heatmap.2(as.matrix(rpm14),trace="none",col=colfunc(25),scale="row", 
+  margins = c(8,15), cexRow=0.5 , cexCol=0.8)
+
+heatmap.2(as.matrix(rpm14),trace="none",col=colfunc(25),scale="row", 
+  Colv="none" , dendrogram="none",
+  margins = c(8,15), cexRow=0.5 , cexCol=0.8)
+
+pdf("heat1.pdf")
+
+heatmap.2(as.matrix(rpm14),trace="none",col=colfunc(25),scale="row",
+  margins = c(8,15), cexRow=0.5 , cexCol=0.8)
+
+heatmap.2(as.matrix(rpm14),trace="none",col=colfunc(25),scale="row", 
+  Colv="none" , dendrogram="none",
+  margins = c(8,15), cexRow=0.5 , cexCol=0.8)
+
+dev.off()
+
+rpm14 <- rpm[which(rownames(rpm) %in% g14),]
+
+rownames(rpm14) <- sapply(strsplit(rownames(rpm14)," "),"[[",2)
+
+# reorder columns
+rpm14 <- rpm14[,c( grep("CON_ut",colnames(rpm14)) , grep("KO_ut",colnames(rpm14)) , grep("KO_dN",colnames(rpm14)) , grep("CON_dN",colnames(rpm14)) )]
+
+colfunc <- colorRampPalette(c("blue", "white", "red"))
+
+heatmap.2(as.matrix(rpm14),trace="none",col=colfunc(25),scale="row", 
+  margins = c(8,15), cexRow=0.5 , cexCol=0.8)
+
+heatmap.2(as.matrix(rpm14),trace="none",col=colfunc(25),scale="row",
+  Colv="none" , dendrogram="none",
+  margins = c(8,15), cexRow=0.5 , cexCol=0.8)
+
+pdf("heat2.pdf")
+
+heatmap.2(as.matrix(rpm14),trace="none",col=colfunc(25),scale="row",
+  margins = c(8,15), cexRow=0.5 , cexCol=0.8)
+
+heatmap.2(as.matrix(rpm14),trace="none",col=colfunc(25),scale="row", 
+  Colv="none" , dendrogram="none",
+  margins = c(8,15), cexRow=0.5 , cexCol=0.8)
+
+dev.off()
+
+rpm1x <- rpm1[which(rownames(rpm1) %in% g14),]
+fc1 <- dge1[which(rownames(dge1) %in% g14),"log2FoldChange",drop=F]
+rpm1x <- merge(rpm1x,fc1,by=0)
+rpm1x <- rpm1x[order(rpm1x$log2FoldChange),]
+rpm1x$log2FoldChange=NULL
+rownames(rpm1x) <- rpm1x$Row.names
+rpm1x$Row.names=NULL
+rownames(rpm1x) <- sapply(strsplit(rownames(rpm1x)," "),"[[",2)
+rpm1x <- rpm1x[,rev(order(colnames(rpm1x)))]
+
+rpm4x <- rpm4[which(rownames(rpm4) %in% g14),]
+rpm4x <- merge(rpm4x,fc1,by=0)
+rpm4x <- rpm4x[order(rpm4x$log2FoldChange),]
+rpm4x$log2FoldChange=NULL
+rownames(rpm4x) <- rpm4x$Row.names
+rpm4x$Row.names=NULL
+rownames(rpm4x) <- sapply(strsplit(rownames(rpm4x)," "),"[[",2)
+rpm4x <- rpm4x[,rev(order(colnames(rpm4x)))]
+
+heatmap.2(as.matrix(rpm1x),trace="none",col=colfunc(25),scale="row", margins = c(8,15), 
+  cexRow=0.5 , cexCol=0.8, Rowv=FALSE, dendrogram='none',Colv=FALSE)
+
+heatmap.2(as.matrix(rpm4x),trace="none",col=colfunc(25),scale="row", margins = c(8,15), 
+  cexRow=0.5 , cexCol=0.8, Rowv=FALSE, dendrogram='none',Colv=FALSE)
+
+pdf("heat3.pdf")
+
+heatmap.2(as.matrix(rpm1x),trace="none",col=colfunc(25),scale="row", margins = c(8,15), 
+  cexRow=0.5 , cexCol=0.8, Rowv=FALSE, dendrogram='none',Colv=FALSE)
+
+heatmap.2(as.matrix(rpm4x),trace="none",col=colfunc(25),scale="row", margins = c(8,15), 
+  cexRow=0.5 , cexCol=0.8, Rowv=FALSE, dendrogram='none',Colv=FALSE)
+dev.off()
 
 ```
 
@@ -477,6 +651,10 @@ v0 <- list("C1 up"=d1up,"C1 dn"=d1dn, "C2 up" = d2up, "C2 dn"=d2dn, "C3 up"=d3up
 
 plot(euler(v0),quantities = TRUE, edges = "gray", main="DEGs")
 
+pdf("euler1.pdf")
+plot(euler(v0),quantities = TRUE, edges = "gray", main="DEGs")
+dev.off()
+
 ```
 
 Now with just the DEGs from contrasts 1 and 4.
@@ -491,6 +669,10 @@ v0 <- list("KO up"=d1up,"KO dn"=d1dn, "drug up"=d4up, "drug dn"=d4dn)
 
 plot(euler(v0),quantities = TRUE, edges = "gray", main="DEGs")
 
+pdf("euler2.pdf")
+plot(euler(v0),quantities = TRUE, edges = "gray", main="DEGs")
+dev.off()
+
 ```
 
 Now with just the DEGs from contrasts 1 and 5.
@@ -504,6 +686,10 @@ par(mar=c(2,2,2,2))
 v0 <- list("KO up"=d1up,"KO dn"=d1dn, "drugtrt up"=d5up, "drugtrt dn"=d5dn)
 
 plot(euler(v0),quantities = TRUE, edges = "gray", main="DEGs")
+
+pdf("euler3.pdf")
+plot(euler(v0),quantities = TRUE, edges = "gray", main="DEGs")
+dev.off()
 
 ```
 
@@ -526,10 +712,11 @@ mres1 <- mitch_calc(m1, genesets, priority="effect")
 head(mres1$enrichment_result,20) %>%
   kbl(caption = "Top gene pathway differences in contrast 1") %>%
   kable_paper("hover", full_width = F)
+mitch_barplot(mres1)
 m1top <- subset(mres1$enrichment_result,p.adjustANOVA<0.05)
 m1up <- subset(m1top,s.dist>0)$set
 m1dn <- subset(m1top,s.dist<0)$set
-mitch_report(mres1,outfile="mitch1.html",overwrite=TRUE)
+#mitch_report(mres1,outfile="mitch1.html",overwrite=TRUE)
 write.table(mres1$enrichment_result,file="mitch1.tsv",quote=FALSE,sep="\t",row.names=FALSE)
 
 m1top_up <- head(subset(m1top,s.dist>0),10)[,"s.dist"]
@@ -550,10 +737,11 @@ mres2 <- mitch_calc(m2, genesets, priority="effect")
 head(mres2$enrichment_result,20) %>% 
   kbl(caption = "Top gene pathway differences in contrast 2") %>%
   kable_paper("hover", full_width = F)
+mitch_barplot(mres2)
 m2top <- subset(mres2$enrichment_result,p.adjustANOVA<0.05)
 m2up <- subset(m2top,s.dist>0)$set
 m2dn <- subset(m2top,s.dist<0)$set
-mitch_report(mres2,outfile="mitch2.html",overwrite=TRUE)
+#mitch_report(mres2,outfile="mitch2.html",overwrite=TRUE)
 write.table(mres2$enrichment_result,file="mitch2.tsv",quote=FALSE,sep="\t",row.names=FALSE)
 
 m3 <- mitch_import(dge3, DEtype="deseq2",geneTable=gt)
@@ -561,10 +749,11 @@ mres3 <- mitch_calc(m3, genesets, priority="effect")
 head(mres3$enrichment_result,20) %>%
   kbl(caption = "Top gene pathway differences in contrast 3") %>%
   kable_paper("hover", full_width = F)
+mitch_barplot(mres3)
 m3top <- subset(mres3$enrichment_result,p.adjustANOVA<0.05)
 m3up <- subset(m3top,s.dist>0)$set
 m3dn <- subset(m3top,s.dist<0)$set
-mitch_report(mres3,outfile="mitch3.html",overwrite=TRUE)
+#mitch_report(mres3,outfile="mitch3.html",overwrite=TRUE)
 write.table(mres3$enrichment_result,file="mitch3.tsv",quote=FALSE,sep="\t",row.names=FALSE)
 
 m4 <- mitch_import(dge4, DEtype="deseq2",geneTable=gt)
@@ -572,10 +761,11 @@ mres4 <- mitch_calc(m4, genesets, priority="effect")
 head(mres4$enrichment_result,20) %>%
   kbl(caption = "Top gene pathway differences in contrast 4") %>%
   kable_paper("hover", full_width = F)
+mitch_barplot(mres4)
 m4top <- subset(mres4$enrichment_result,p.adjustANOVA<0.05)
 m4up <- subset(m4top,s.dist>0)$set
 m4dn <- subset(m4top,s.dist<0)$set
-mitch_report(mres4,outfile="mitch4.html",overwrite=TRUE)
+#mitch_report(mres4,outfile="mitch4.html",overwrite=TRUE)
 write.table(mres4$enrichment_result,file="mitch4.tsv",quote=FALSE,sep="\t",row.names=FALSE)
 
 m5 <- mitch_import(dge5, DEtype="deseq2",geneTable=gt)
@@ -583,11 +773,20 @@ mres5 <- mitch_calc(m5, genesets, priority="effect")
 head(mres5$enrichment_result,20) %>%
   kbl(caption = "Top gene pathway differences in contrast 5") %>%
   kable_paper("hover", full_width = F)
+mitch_barplot(mres5)
 m5top <- subset(mres5$enrichment_result,p.adjustANOVA<0.05)
 m5up <- subset(m5top,s.dist>0)$set
 m5dn <- subset(m5top,s.dist<0)$set
-mitch_report(mres5,outfile="mitch5.html",overwrite=TRUE)
+#mitch_report(mres5,outfile="mitch5.html",overwrite=TRUE)
 write.table(mres5$enrichment_result,file="mitch5.tsv",quote=FALSE,sep="\t",row.names=FALSE)
+
+pdf("mitch_barplots.pdf")
+mitch_barplot(mres1)
+mitch_barplot(mres2)
+mitch_barplot(mres3)
+mitch_barplot(mres4)
+mitch_barplot(mres5)
+dev.off()
 
 ```
 
@@ -619,6 +818,31 @@ z <- lapply(myres, function(mres) {
   beeswarm(ridgedata,add=TRUE,horizontal = TRUE, pch=19,cex=0.6,corral = "gutter")
 })
 
+pdf("ridge1.pdf")
+z <- lapply(myres, function(mres) {
+  sets <- head(mres$enrichment_result,10)
+  sets <- sets[order(sets$s.dist),"set"]
+  ridgedata <- lapply( sets , function(myset) {
+    genes <- genesets[[which(names(genesets) == myset)]]
+    generanks <- mres$ranked_profile[which(rownames(mres$ranked_profile) %in% genes),]
+    return(generanks)
+  })
+  names(ridgedata) <- sets
+  myrange <- range(mres$ranked_profile[,1])
+  par(mar=c(5,20,3,2))
+
+ vioplot(ridgedata,horizontal=TRUE,las=1,
+    ylim=myrange,main="Top 10 genesets",
+    xlab="differential gene rank")
+
+ vioplot(ridgedata,horizontal=TRUE,las=1,
+    ylim=myrange,col="white",main="Top 10 genesets",
+    xlab="differential gene rank",
+    rectCol="gray")
+  beeswarm(ridgedata,add=TRUE,horizontal = TRUE, pch=19,cex=0.6,corral = "gutter")
+})
+dev.off()
+
 ```
 
 Make some heatmaps
@@ -647,6 +871,28 @@ z <- lapply(sets, function(set){
     cexCol=0.9, main=paste(set) )
 })
 
+pdf("peheat1.pdf")
+z <- lapply(sets, function(set){
+  genes <- genesets[[which(names(genesets) == set)]]
+  refgenes <- sapply(strsplit(rownames(rpm1)," "),"[[",2)
+  hm <- as.matrix(rpm1[which(refgenes %in% genes),])
+  hm <- hm/rowMeans(hm)
+  colfunc <- colorRampPalette(c("blue", "white", "red"))
+  heatmap.2(hm,trace="none",col=colfunc(25),scale="row", margins = c(6,15), cexRow=0.9,
+    cexCol=0.9, main=paste(set) )
+})
+
+z <- lapply(sets, function(set){
+  genes <- genesets[[which(names(genesets) == set)]]
+  refgenes <- sapply(strsplit(rownames(rpm)," "),"[[",2)
+  hm <- as.matrix(rpm[which(refgenes %in% genes),])
+  hm <- hm/rowMeans(hm)
+  colfunc <- colorRampPalette(c("blue", "white", "red"))
+  heatmap.2(hm,trace="none",col=colfunc(25),scale="row", margins = c(6,15), cexRow=0.7,
+    cexCol=0.9, main=paste(set) )
+})
+dev.off()
+
 ```
 
 Now an Euler diagram of differentially regulated gene sets from contrasts 1 and 4.
@@ -660,6 +906,10 @@ par(mar=c(2,2,2,2))
 v0 <- list("KO up"=m1up,"KO dn"=m1dn, "drug up"=m4up, "drug dn"=m4dn)
 
 plot(euler(v0),quantities = TRUE, edges = "gray", main="Reactome pathways")
+
+pdf("gseuler1.pdf")
+plot(euler(v0),quantities = TRUE, edges = "gray", main="Reactome pathways")
+dev.off()
 
 ```
 
@@ -676,7 +926,8 @@ m <- mitch_import(mm, DEtype="deseq2",geneTable=gt)
 mres <- mitch_calc(m, genesets, priority="effect")
 head(mres$enrichment_result,20) %>% 
 kbl(caption = "Top gene pathway differences in contrast 1 and 4") %>% kable_paper("hover", full_width = F)
-mitch_report(mres,outfile="mitchmulti_effect.html",overwrite=TRUE)
+#mitch_report(mres,outfile="mitchmulti_effect.html",overwrite=TRUE)
+mitch_plots(mres, outfile="mitchmulti_effect.pdf")
 write.table(mres$enrichment_result,file="mitch_multi_effect.tsv",quote=FALSE,sep="\t",row.names=FALSE)
 n=40
 mx <- as.matrix(mres$enrichment_result[1:n,4:5])
@@ -700,7 +951,9 @@ mm <- list("KO"=dge1,"drug"=dge4)
 m <- mitch_import(mm, DEtype="deseq2",geneTable=gt)
 mres <- mitch_calc(m, genesets, priority="SD")
 head(mres$enrichment_result,20) %>% kbl(caption = "Top gene pathway differences in contrast 1 and 4") %>% kable_paper("hover", full_width = F)
-mitch_report(mres,outfile="mitchmulti_discord.html",overwrite=TRUE)
+#mitch_report(mres,outfile="mitchmulti_discord.html",overwrite=TRUE)
+mitch_plots(mres, outfile="mitchmulti_discord.pdf")
+
 write.table(mres$enrichment_result,file="mitch_multi_discord.tsv",quote=FALSE,sep="\t",row.names=FALSE)
 
 n=40
@@ -728,7 +981,8 @@ head(mres1$enrichment_result,20) %>% kbl(caption = "Top mito pathway differences
 m1top <- subset(mres1$enrichment_result,p.adjustANOVA<0.05)
 m1up <- subset(m1top,s.dist>0)$set
 m1dn <- subset(m1top,s.dist<0)$set
-mitch_report(mres1,outfile="mitch_mito1.html",overwrite=TRUE)
+#mitch_report(mres1,outfile="mitch_mito1.html",overwrite=TRUE)
+mitch_plots(mres1, outfile="mitch_mito1.pdf")
 write.table(mres1$enrichment_result,file="mitch_mito1.tsv",quote=FALSE,sep="\t",row.names=FALSE)
 
 m2 <- mitch_import(dge2, DEtype="deseq2",geneTable=gt)
@@ -737,7 +991,8 @@ head(mres2$enrichment_result,20) %>% kbl(caption = "Top mito pathway differences
 m2top <- subset(mres2$enrichment_result,p.adjustANOVA<0.05)
 m2up <- subset(m2top,s.dist>0)$set
 m2dn <- subset(m2top,s.dist<0)$set
-mitch_report(mres2,outfile="mitch_mito2.html",overwrite=TRUE)
+#mitch_report(mres2,outfile="mitch_mito2.html",overwrite=TRUE)
+mitch_plots(mres2, outfile="mitch_mito2.pdf")
 write.table(mres2$enrichment_result,file="mitch_mito2.tsv",quote=FALSE,sep="\t",row.names=FALSE)
 
 m3 <- mitch_import(dge3, DEtype="deseq2",geneTable=gt)
@@ -746,7 +1001,8 @@ head(mres3$enrichment_result,20) %>% kbl(caption = "Top mito pathway differences
 m3top <- subset(mres3$enrichment_result,p.adjustANOVA<0.05)
 m3up <- subset(m3top,s.dist>0)$set
 m3dn <- subset(m3top,s.dist<0)$set
-mitch_report(mres3,outfile="mitch_mito3.html",overwrite=TRUE)
+#mitch_report(mres3,outfile="mitch_mito3.html",overwrite=TRUE)
+mitch_plots(mres3, outfile="mitch_mito3.pdf")
 write.table(mres3$enrichment_result,file="mitch_mito3.tsv",quote=FALSE,sep="\t",row.names=FALSE)
 
 m4 <- mitch_import(dge4, DEtype="deseq2",geneTable=gt)
@@ -755,7 +1011,8 @@ head(mres4$enrichment_result,20) %>% kbl(caption = "Top mito pathway differences
 m4top <- subset(mres4$enrichment_result,p.adjustANOVA<0.05)
 m4up <- subset(m4top,s.dist>0)$set
 m4dn <- subset(m4top,s.dist<0)$set
-mitch_report(mres4,outfile="mitch_mito4.html",overwrite=TRUE)
+#mitch_report(mres4,outfile="mitch_mito4.html",overwrite=TRUE)
+mitch_plots(mres4, outfile="mitch_mito4.pdf")
 write.table(mres4$enrichment_result,file="mitch_mito4.tsv",quote=FALSE,sep="\t",row.names=FALSE)
 
 m5 <- mitch_import(dge5, DEtype="deseq2",geneTable=gt)
@@ -764,7 +1021,8 @@ head(mres5$enrichment_result,20) %>% kbl(caption = "Top mito pathway differences
 m5top <- subset(mres5$enrichment_result,p.adjustANOVA<0.05)
 m5up <- subset(m5top,s.dist>0)$set
 m5dn <- subset(m5top,s.dist<0)$set
-mitch_report(mres5,outfile="mitch_mito5.html",overwrite=TRUE)
+#mitch_report(mres5,outfile="mitch_mito5.html",overwrite=TRUE)
+mitch_plots(mres5, outfile="mitch_mito5.pdf")
 write.table(mres5$enrichment_result,file="mitch_mito5.tsv",quote=FALSE,sep="\t",row.names=FALSE)
 
 ```
@@ -946,7 +1204,7 @@ m <- mitch_import(mm, DEtype="deseq2",geneTable=gt)
 mres <- mitch_calc(m, custom_sets, priority="effect")
 head(mres$enrichment_result,20) %>%
   kbl(caption = "Top mito pathway differences in contrast 1 and 4") %>% kable_paper("hover", full_width = F)
-mitch_report(mres,outfile="mitchmulti_effect_mito.html",overwrite=TRUE)
+#mitch_report(mres,outfile="mitchmulti_effect_mito.html",overwrite=TRUE)
 write.table(mres$enrichment_result,file="mitch_multi_effect_mito.tsv",quote=FALSE,sep="\t",row.names=FALSE)
 mx <- as.matrix(mres$enrichment_result[,4:5])
 rownames(mx) <- mres$set
@@ -960,7 +1218,7 @@ heatmap.2(mx,trace="none",col=colfunc(25),scale="none", margins = c(5,22), cexRo
 
 mres <- mitch_calc(m, custom_sets, priority="SD")
 head(mres$enrichment_result,20) %>% kbl(caption = "Top mito pathway differences in contrast 1 and 4") %>% kable_paper("hover", full_width = F)
-mitch_report(mres,outfile="mitchmulti_discord_mito.html",overwrite=TRUE)
+#mitch_report(mres,outfile="mitchmulti_discord_mito.html",overwrite=TRUE)
 write.table(mres$enrichment_result,file="mitch_multi_discord_mito.tsv",quote=FALSE,sep="\t",row.names=FALSE)
 
 mx <- as.matrix(mres$enrichment_result[,4:5])
