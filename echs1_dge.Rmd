@@ -458,6 +458,16 @@ mitch_barplot <- function(res){
     names.arg=sig$set,main="Enrichment score") ;grid()
 }
 
+
+mitch_barplot2 <- function(res){
+  sig_up <- head(subset(res$enrichment_result,p.adjustANOVA<0.05 & s.dist>0),15)
+  sig_dn <- head(subset(res$enrichment_result,p.adjustANOVA<0.05 & s.dist<0),15)
+  sig <- rbind(sig_up,sig_dn)
+  sig <- sig[order(sig$s.dist),]
+  par(mar=c(3,25,1,1)); barplot(sig$s.dist,horiz=TRUE,las=2,cex.names = 0.6,cex.axis = 0.6,
+    names.arg=sig$set,main="Enrichment score") ;grid()
+}
+
 maplot(dge1,"Cont1: Effect of KO in untr cells")
 make_volcano(dge1,"Cont1: Effect of KO in untr cells")
 make_volcano2(dge1,"Cont1: Effect of KO in untr cells")
@@ -713,6 +723,8 @@ head(mres1$enrichment_result,20) %>%
   kbl(caption = "Top gene pathway differences in contrast 1") %>%
   kable_paper("hover", full_width = F)
 mitch_barplot(mres1)
+mitch_barplot2(mres1)
+mitch_plots(mres1,outfile="mitch1.pdf")
 m1top <- subset(mres1$enrichment_result,p.adjustANOVA<0.05)
 m1up <- subset(m1top,s.dist>0)$set
 m1dn <- subset(m1top,s.dist<0)$set
@@ -738,6 +750,8 @@ head(mres2$enrichment_result,20) %>%
   kbl(caption = "Top gene pathway differences in contrast 2") %>%
   kable_paper("hover", full_width = F)
 mitch_barplot(mres2)
+mitch_barplot2(mres2)
+mitch_plots(mres2,outfile="mitch2.pdf")
 m2top <- subset(mres2$enrichment_result,p.adjustANOVA<0.05)
 m2up <- subset(m2top,s.dist>0)$set
 m2dn <- subset(m2top,s.dist<0)$set
@@ -750,6 +764,8 @@ head(mres3$enrichment_result,20) %>%
   kbl(caption = "Top gene pathway differences in contrast 3") %>%
   kable_paper("hover", full_width = F)
 mitch_barplot(mres3)
+mitch_barplot2(mres3)
+mitch_plots(mres3,outfile="mitch3.pdf")
 m3top <- subset(mres3$enrichment_result,p.adjustANOVA<0.05)
 m3up <- subset(m3top,s.dist>0)$set
 m3dn <- subset(m3top,s.dist<0)$set
@@ -762,6 +778,8 @@ head(mres4$enrichment_result,20) %>%
   kbl(caption = "Top gene pathway differences in contrast 4") %>%
   kable_paper("hover", full_width = F)
 mitch_barplot(mres4)
+mitch_barplot2(mres4)
+mitch_plots(mres4,outfile="mitch4.pdf")
 m4top <- subset(mres4$enrichment_result,p.adjustANOVA<0.05)
 m4up <- subset(m4top,s.dist>0)$set
 m4dn <- subset(m4top,s.dist<0)$set
@@ -774,6 +792,8 @@ head(mres5$enrichment_result,20) %>%
   kbl(caption = "Top gene pathway differences in contrast 5") %>%
   kable_paper("hover", full_width = F)
 mitch_barplot(mres5)
+mitch_barplot2(mres5)
+mitch_plots(mres5,outfile="mitch5.pdf")
 m5top <- subset(mres5$enrichment_result,p.adjustANOVA<0.05)
 m5up <- subset(m5top,s.dist>0)$set
 m5dn <- subset(m5top,s.dist<0)$set
@@ -782,10 +802,15 @@ write.table(mres5$enrichment_result,file="mitch5.tsv",quote=FALSE,sep="\t",row.n
 
 pdf("mitch_barplots.pdf")
 mitch_barplot(mres1)
+mitch_barplot2(mres1)
 mitch_barplot(mres2)
+mitch_barplot2(mres2)
 mitch_barplot(mres3)
+mitch_barplot2(mres3)
 mitch_barplot(mres4)
+mitch_barplot2(mres4)
 mitch_barplot(mres5)
+mitch_barplot2(mres5)
 dev.off()
 
 ```
@@ -956,15 +981,22 @@ mitch_plots(mres, outfile="mitchmulti_discord.pdf")
 
 write.table(mres$enrichment_result,file="mitch_multi_discord.tsv",quote=FALSE,sep="\t",row.names=FALSE)
 
-n=40
+n=50
+
 mx <- as.matrix(mres$enrichment_result[1:n,4:5])
 rownames(mx) <- mres$set
 rownames(mx) <- mres$enrichment_result$set[1:n]
 
 colfunc <- colorRampPalette(c("blue", "white", "red"))
 
-heatmap.2(mx,trace="none",col=colfunc(25),scale="none", margins = c(5,15), cexRow=0.7,
+heatmap.2(mx,trace="none",col=colfunc(25),scale="none", margins = c(5,25), cexRow=0.6,
     cexCol=0.9, main=paste("Top ranked Reactomes") )
+
+pdf("mitchmulti_discord_heat.pdf")
+heatmap.2(mx,trace="none",col=colfunc(25),scale="none", margins = c(5,25), cexRow=0.6,
+    cexCol=0.9, main=paste("Top ranked Reactomes") )
+dev.off()
+
 
 ```
 
