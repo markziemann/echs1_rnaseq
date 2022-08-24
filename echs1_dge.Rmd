@@ -718,7 +718,7 @@ gt <- as.data.frame(rownames(xx))
 gt$gene <- sapply(strsplit(gt[,1]," "),"[[",2)
 
 m1 <- mitch_import(dge1, DEtype="deseq2",geneTable=gt)
-mres1 <- mitch_calc(m1, genesets, priority="effect")
+mres1 <- mitch_calc(m1, genesets, priority="effect",resrows=52)
 head(mres1$enrichment_result,20) %>%
   kbl(caption = "Top gene pathway differences in contrast 1") %>%
   kable_paper("hover", full_width = F)
@@ -729,6 +729,7 @@ m1top <- subset(mres1$enrichment_result,p.adjustANOVA<0.05)
 m1up <- subset(m1top,s.dist>0)$set
 m1dn <- subset(m1top,s.dist<0)$set
 #mitch_report(mres1,outfile="mitch1.html",overwrite=TRUE)
+mitch_plots(res=mres1,outfile="mitch1.pdf")
 write.table(mres1$enrichment_result,file="mitch1.tsv",quote=FALSE,sep="\t",row.names=FALSE)
 
 m1top_up <- head(subset(m1top,s.dist>0),10)[,"s.dist"]
@@ -743,9 +744,67 @@ par(mar=c(5,25,3,1))
 barplot(m1top_updn,horiz=TRUE,las=1,col="darkgray",xlab="Enrichment score",cex.names=0.8,xlim=c(-1,1))
 grid()
 dev.off()
+par(mar=c(5.1, 4.1, 4.1, 2.1))
+
+# Reduction of cytosolic Ca++ levels
+gs <- genesets[[which(names(genesets) == "Reduction of cytosolic Ca++ levels")]]
+dge1 <- dge1[which(!is.na(dge1$pvalue )),]
+dge1$gene <- sapply(strsplit(rownames(dge1)," "),"[[",2)
+dge1gs <- dge1[which(dge1$gene %in% gs),]
+# volcano
+plot(dge1$log2FoldChange,-log10(dge1$pvalue+1e-312),pch=19,col="darkgray")
+points(dge1gs$log2FoldChange,-log10(dge1gs$pvalue+1e-312),pch=19,col="red")
+# rug
+m1rank <- mres1$ranked_profile
+rug1 <- m1rank[which(rownames(m1rank) %in% gs),]
+names(rug1) <- rownames(m1rank)[which(rownames(m1rank) %in% gs)]
+MAX=max(m1rank)
+MIN=min(m1rank)
+par(mfrow=c(2,1))
+bs <- beeswarm(rug1,horizontal=TRUE,cex=5,
+  xlim=c(MIN,MAX),pch=19,col="darkgray",
+  xlab="gene rank")
+text(bs[,2:1],labels=names(rug1))
+mtext("Reduction of cytosolic Ca++ levels")
+par(mfrow=c(1,1))
+
+pdf("beeswarm.pdf")
+MAX=max(m1rank)
+MIN=min(m1rank)
+par(mfrow=c(2,1))
+bs <- beeswarm(rug1,horizontal=TRUE,cex=5,
+  xlim=c(MIN,MAX),pch=19,col="darkgray",
+  xlab="gene rank")
+text(bs[,2:1],labels=names(rug1))
+mtext("Reduction of cytosolic Ca++ levels")
+par(mfrow=c(1,1))
+dev.off()
+
+#geneset volcano
+sig1 <- subset(mres1$enrichment_result,p.adjustANOVA<0.05)
+plot(mres1$enrichment_result$s.dist,-log10(mres1$enrichment_result$pANOVA),
+  col="darkgray",pch=19,xlab="s distance",ylab="-log10 ANOVA p-value")
+mtext("Gene set enrichment")
+points(sig1$s.dist,-log10(sig1$pANOVA), col="red", pch=19 )
+which(sig1$set=="Reduction of cytosolic Ca++ levels")
+sig1b <- sig1[which(sig1$set=="Reduction of cytosolic Ca++ levels"),]
+points(sig1b$s.dist,-log10(sig1b$pANOVA),cex=2,lwd=2)
+text(sig1b$s.dist,(-log10(sig1b$pANOVA)-2),labels="Reduction of cytosolic Ca++ levels")
+
+pdf("volcano.pdf")
+plot(mres1$enrichment_result$s.dist,-log10(mres1$enrichment_result$pANOVA),
+  col="darkgray",pch=19,xlab="s distance",ylab="-log10 ANOVA p-value")
+mtext("Gene set enrichment")
+points(sig1$s.dist,-log10(sig1$pANOVA), col="red", pch=19 )
+which(sig1$set=="Reduction of cytosolic Ca++ levels")
+sig1b <- sig1[which(sig1$set=="Reduction of cytosolic Ca++ levels"),]
+points(sig1b$s.dist,-log10(sig1b$pANOVA),cex=2,lwd=2)
+text(sig1b$s.dist,(-log10(sig1b$pANOVA)-2),labels="Reduction of cytosolic Ca++ levels")
+dev.off()
+
 
 m2 <- mitch_import(dge2, DEtype="deseq2",geneTable=gt)
-mres2 <- mitch_calc(m2, genesets, priority="effect")
+mres2 <- mitch_calc(m2, genesets, priority="effect",resrows=52)
 head(mres2$enrichment_result,20) %>% 
   kbl(caption = "Top gene pathway differences in contrast 2") %>%
   kable_paper("hover", full_width = F)
@@ -756,10 +815,11 @@ m2top <- subset(mres2$enrichment_result,p.adjustANOVA<0.05)
 m2up <- subset(m2top,s.dist>0)$set
 m2dn <- subset(m2top,s.dist<0)$set
 #mitch_report(mres2,outfile="mitch2.html",overwrite=TRUE)
+mitch_plots(res=mres2,outfile="mitch2.pdf")
 write.table(mres2$enrichment_result,file="mitch2.tsv",quote=FALSE,sep="\t",row.names=FALSE)
 
 m3 <- mitch_import(dge3, DEtype="deseq2",geneTable=gt)
-mres3 <- mitch_calc(m3, genesets, priority="effect")
+mres3 <- mitch_calc(m3, genesets, priority="effect",resrows=52)
 head(mres3$enrichment_result,20) %>%
   kbl(caption = "Top gene pathway differences in contrast 3") %>%
   kable_paper("hover", full_width = F)
@@ -770,10 +830,11 @@ m3top <- subset(mres3$enrichment_result,p.adjustANOVA<0.05)
 m3up <- subset(m3top,s.dist>0)$set
 m3dn <- subset(m3top,s.dist<0)$set
 #mitch_report(mres3,outfile="mitch3.html",overwrite=TRUE)
+mitch_plots(res=mres3,outfile="mitch3.pdf")
 write.table(mres3$enrichment_result,file="mitch3.tsv",quote=FALSE,sep="\t",row.names=FALSE)
 
 m4 <- mitch_import(dge4, DEtype="deseq2",geneTable=gt)
-mres4 <- mitch_calc(m4, genesets, priority="effect")
+mres4 <- mitch_calc(m4, genesets, priority="effect",resrows=52)
 head(mres4$enrichment_result,20) %>%
   kbl(caption = "Top gene pathway differences in contrast 4") %>%
   kable_paper("hover", full_width = F)
@@ -784,10 +845,11 @@ m4top <- subset(mres4$enrichment_result,p.adjustANOVA<0.05)
 m4up <- subset(m4top,s.dist>0)$set
 m4dn <- subset(m4top,s.dist<0)$set
 #mitch_report(mres4,outfile="mitch4.html",overwrite=TRUE)
+mitch_plots(res=mres4,outfile="mitch4.pdf")
 write.table(mres4$enrichment_result,file="mitch4.tsv",quote=FALSE,sep="\t",row.names=FALSE)
 
 m5 <- mitch_import(dge5, DEtype="deseq2",geneTable=gt)
-mres5 <- mitch_calc(m5, genesets, priority="effect")
+mres5 <- mitch_calc(m5, genesets, priority="effect",resrows=52)
 head(mres5$enrichment_result,20) %>%
   kbl(caption = "Top gene pathway differences in contrast 5") %>%
   kable_paper("hover", full_width = F)
@@ -798,6 +860,7 @@ m5top <- subset(mres5$enrichment_result,p.adjustANOVA<0.05)
 m5up <- subset(m5top,s.dist>0)$set
 m5dn <- subset(m5top,s.dist<0)$set
 #mitch_report(mres5,outfile="mitch5.html",overwrite=TRUE)
+mitch_plots(res=mres5,outfile="mitch5.pdf")
 write.table(mres5$enrichment_result,file="mitch5.tsv",quote=FALSE,sep="\t",row.names=FALSE)
 
 pdf("mitch_barplots.pdf")
@@ -948,7 +1011,7 @@ The effect of the KO, and the effect of the drug when the gene is knocked out.
 mm <- list("KO"=dge1,"drug"=dge4)
 
 m <- mitch_import(mm, DEtype="deseq2",geneTable=gt)
-mres <- mitch_calc(m, genesets, priority="effect")
+mres <- mitch_calc(m, genesets, priority="effect",resrows=52)
 head(mres$enrichment_result,20) %>% 
 kbl(caption = "Top gene pathway differences in contrast 1 and 4") %>% kable_paper("hover", full_width = F)
 #mitch_report(mres,outfile="mitchmulti_effect.html",overwrite=TRUE)
@@ -974,7 +1037,7 @@ Gene sets are prioritised by standard deviation.
 mm <- list("KO"=dge1,"drug"=dge4)
 
 m <- mitch_import(mm, DEtype="deseq2",geneTable=gt)
-mres <- mitch_calc(m, genesets, priority="SD")
+mres <- mitch_calc(m, genesets, priority="SD",resrows=52)
 head(mres$enrichment_result,20) %>% kbl(caption = "Top gene pathway differences in contrast 1 and 4") %>% kable_paper("hover", full_width = F)
 #mitch_report(mres,outfile="mitchmulti_discord.html",overwrite=TRUE)
 mitch_plots(mres, outfile="mitchmulti_discord.pdf")
@@ -1008,7 +1071,7 @@ custom_set_names <- readLines("custom_pathway_list.txt")
 custom_sets <- genesets[which(names(genesets) %in% custom_set_names)]
 
 m1 <- mitch_import(dge1, DEtype="deseq2",geneTable=gt)
-mres1 <- mitch_calc(m1, custom_sets, priority="effect")
+mres1 <- mitch_calc(m1, custom_sets, priority="effect",resrows=52)
 head(mres1$enrichment_result,20) %>% kbl(caption = "Top mito pathway differences in contrast 1") %>% kable_paper("hover", full_width = F)
 m1top <- subset(mres1$enrichment_result,p.adjustANOVA<0.05)
 m1up <- subset(m1top,s.dist>0)$set
@@ -1018,7 +1081,7 @@ mitch_plots(mres1, outfile="mitch_mito1.pdf")
 write.table(mres1$enrichment_result,file="mitch_mito1.tsv",quote=FALSE,sep="\t",row.names=FALSE)
 
 m2 <- mitch_import(dge2, DEtype="deseq2",geneTable=gt)
-mres2 <- mitch_calc(m2, custom_sets, priority="effect")
+mres2 <- mitch_calc(m2, custom_sets, priority="effect",resrows=52)
 head(mres2$enrichment_result,20) %>% kbl(caption = "Top mito pathway differences in contrast 2") %>% kable_paper("hover", full_width = F)
 m2top <- subset(mres2$enrichment_result,p.adjustANOVA<0.05)
 m2up <- subset(m2top,s.dist>0)$set
@@ -1028,7 +1091,7 @@ mitch_plots(mres2, outfile="mitch_mito2.pdf")
 write.table(mres2$enrichment_result,file="mitch_mito2.tsv",quote=FALSE,sep="\t",row.names=FALSE)
 
 m3 <- mitch_import(dge3, DEtype="deseq2",geneTable=gt)
-mres3 <- mitch_calc(m3, custom_sets, priority="effect")
+mres3 <- mitch_calc(m3, custom_sets, priority="effect",resrows=52)
 head(mres3$enrichment_result,20) %>% kbl(caption = "Top mito pathway differences in contrast 3") %>% kable_paper("hover", full_width = F)
 m3top <- subset(mres3$enrichment_result,p.adjustANOVA<0.05)
 m3up <- subset(m3top,s.dist>0)$set
@@ -1038,7 +1101,7 @@ mitch_plots(mres3, outfile="mitch_mito3.pdf")
 write.table(mres3$enrichment_result,file="mitch_mito3.tsv",quote=FALSE,sep="\t",row.names=FALSE)
 
 m4 <- mitch_import(dge4, DEtype="deseq2",geneTable=gt)
-mres4 <- mitch_calc(m4, custom_sets, priority="effect")
+mres4 <- mitch_calc(m4, custom_sets, priority="effect",resrows=52)
 head(mres4$enrichment_result,20) %>% kbl(caption = "Top mito pathway differences in contrast 4") %>% kable_paper("hover", full_width = F)
 m4top <- subset(mres4$enrichment_result,p.adjustANOVA<0.05)
 m4up <- subset(m4top,s.dist>0)$set
@@ -1048,7 +1111,7 @@ mitch_plots(mres4, outfile="mitch_mito4.pdf")
 write.table(mres4$enrichment_result,file="mitch_mito4.tsv",quote=FALSE,sep="\t",row.names=FALSE)
 
 m5 <- mitch_import(dge5, DEtype="deseq2",geneTable=gt)
-mres5 <- mitch_calc(m5, custom_sets, priority="effect")
+mres5 <- mitch_calc(m5, custom_sets, priority="effect",resrows=52)
 head(mres5$enrichment_result,20) %>% kbl(caption = "Top mito pathway differences in contrast 5") %>% kable_paper("hover", full_width = F)
 m5top <- subset(mres5$enrichment_result,p.adjustANOVA<0.05)
 m5up <- subset(m5top,s.dist>0)$set
@@ -1059,7 +1122,7 @@ write.table(mres5$enrichment_result,file="mitch_mito5.tsv",quote=FALSE,sep="\t",
 
 ```
 
-Make some ridge plots.  
+Make some ridge plots.
 
 ```{r,ridgeplots1}
 
@@ -1075,7 +1138,7 @@ z <- lapply(myres, function(mres) {
   names(ridgedata) <- sets
   myrange <- range(mres$ranked_profile[,1])
   par(mar=c(5,20,3,2))
-  
+
   vioplot(ridgedata,horizontal=TRUE,las=1,
     ylim=myrange,main="Top 10 genesets",
     xlab="differential gene rank")
@@ -1233,7 +1296,7 @@ Mitch multi contrasts with custom gene sets
 mm <- list("KO"=dge1,"drug"=dge4)
 m <- mitch_import(mm, DEtype="deseq2",geneTable=gt)
 
-mres <- mitch_calc(m, custom_sets, priority="effect")
+mres <- mitch_calc(m, custom_sets, priority="effect",resrows=52)
 head(mres$enrichment_result,20) %>%
   kbl(caption = "Top mito pathway differences in contrast 1 and 4") %>% kable_paper("hover", full_width = F)
 #mitch_report(mres,outfile="mitchmulti_effect_mito.html",overwrite=TRUE)
@@ -1248,7 +1311,7 @@ heatmap.2(mx,trace="none",col=colfunc(25),scale="none", margins = c(5,22), cexRo
     cexCol=0.9, main=paste("Top ranked Reactomes") )
 
 
-mres <- mitch_calc(m, custom_sets, priority="SD")
+mres <- mitch_calc(m, custom_sets, priority="SD",resrows=52)
 head(mres$enrichment_result,20) %>% kbl(caption = "Top mito pathway differences in contrast 1 and 4") %>% kable_paper("hover", full_width = F)
 #mitch_report(mres,outfile="mitchmulti_discord_mito.html",overwrite=TRUE)
 write.table(mres$enrichment_result,file="mitch_multi_discord_mito.tsv",quote=FALSE,sep="\t",row.names=FALSE)
